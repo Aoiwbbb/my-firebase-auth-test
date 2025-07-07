@@ -7,6 +7,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       background-color: #f0f0f0;
       font-family: 'Segoe UI', sans-serif;
@@ -30,14 +34,15 @@
     h2 {
       text-align: center;
       color: #222CAF;
-      margin-bottom: 24px;
+      margin: 0 0 20px 0;
       font-size: 22px;
     }
 
     input {
+      display: block;
       width: 100%;
       padding: 14px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       border: none;
       border-radius: 6px;
       background-color: #222CAF;
@@ -51,12 +56,13 @@
     }
 
     #recaptcha-container {
-      margin: 16px 0;
+      margin-bottom: 20px;
       display: flex;
       justify-content: center;
     }
 
     button {
+      display: block;
       width: 100%;
       padding: 16px;
       background-color: #000000;
@@ -67,7 +73,7 @@
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.3s ease;
-      margin-bottom: 20px; /* spacing between buttons and inputs */
+      margin-bottom: 20px;
     }
 
     button:hover {
@@ -80,15 +86,17 @@
     <h2>Phone Authentication</h2>
     
     <input id="phoneNumber" type="tel" placeholder="+971xxxxxxxxx" />
+    
     <div id="recaptcha-container"></div>
+    
     <button onclick="sendOTP()">Send OTP</button>
-
+    
     <input id="otp" type="text" placeholder="Enter OTP" maxlength="6" />
+    
     <button onclick="verifyOTP()">Verify OTP</button>
   </div>
 
   <script>
-    // Replace with your actual Firebase config
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "your-project.firebaseapp.com",
