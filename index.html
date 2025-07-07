@@ -4,8 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Phone Authentication</title>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -34,20 +37,26 @@
     h2 {
       text-align: center;
       color: #222CAF;
-      margin: 0 0 20px 0;
+      margin-bottom: 20px;
       font-size: 22px;
     }
 
-    input {
-      display: block;
+    input, button {
       width: 100%;
-      padding: 14px;
-      margin-bottom: 20px;
-      border: none;
+      display: block;
+      margin: 0;
+      padding: 14px 16px;
       border-radius: 6px;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    input {
       background-color: #222CAF;
       color: #CBB26A;
-      font-size: 16px;
+      margin-bottom: 20px;
     }
 
     input::placeholder {
@@ -55,48 +64,37 @@
       opacity: 1;
     }
 
-    #recaptcha-container {
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: center;
-    }
-
     button {
-      display: block;
-      width: 100%;
-      padding: 16px;
       background-color: #000000;
-      color: #FFFFFF;
-      font-weight: bold;
-      font-size: 17px;
-      border: none;
-      border-radius: 6px;
+      color: white;
       cursor: pointer;
-      transition: background-color 0.3s ease;
       margin-bottom: 20px;
+      transition: background-color 0.3s ease;
     }
 
     button:hover {
       background-color: #222222;
+    }
+
+    #recaptcha-container {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Phone Authentication</h2>
-    
     <input id="phoneNumber" type="tel" placeholder="+971xxxxxxxxx" />
-    
     <div id="recaptcha-container"></div>
-    
     <button onclick="sendOTP()">Send OTP</button>
-    
     <input id="otp" type="text" placeholder="Enter OTP" maxlength="6" />
-    
     <button onclick="verifyOTP()">Verify OTP</button>
   </div>
 
   <script>
+    // Your Firebase config - replace these values with your actual config
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "your-project.firebaseapp.com",
@@ -106,9 +104,11 @@
       appId: "1:1234567890:web:abcdef123456"
     };
 
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
+    // Set up reCAPTCHA verifier
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
       size: 'normal',
       callback: (response) => {
@@ -122,6 +122,7 @@
 
     let confirmationResult;
 
+    // Send OTP function
     function sendOTP() {
       const phoneNumber = document.getElementById('phoneNumber').value;
       auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
@@ -134,6 +135,7 @@
         });
     }
 
+    // Verify OTP function
     function verifyOTP() {
       const code = document.getElementById('otp').value;
       if (!confirmationResult) {
@@ -144,7 +146,10 @@
         .then((result) => {
           const user = result.user;
           alert('Login successful!');
-          window.ReactNativeWebView.postMessage(JSON.stringify({ uid: user.uid, phone: user.phoneNumber }));
+          // You can send data back to your app if using WebView
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ uid: user.uid, phone: user.phoneNumber }));
+          }
         })
         .catch((error) => {
           alert('Invalid OTP: ' + error.message);
