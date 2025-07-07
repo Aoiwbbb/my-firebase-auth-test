@@ -43,20 +43,20 @@
 
     input, button {
       width: 100%;
-      display: block;
-      margin: 0;
       padding: 14px 16px;
-      border-radius: 6px;
       border: none;
+      border-radius: 6px;
       font-size: 16px;
       font-weight: bold;
       text-align: center;
+      display: block;
+      margin-bottom: 20px;
+      box-sizing: border-box;
     }
 
     input {
       background-color: #222CAF;
       color: #CBB26A;
-      margin-bottom: 20px;
     }
 
     input::placeholder {
@@ -68,7 +68,6 @@
       background-color: #000000;
       color: white;
       cursor: pointer;
-      margin-bottom: 20px;
       transition: background-color 0.3s ease;
     }
 
@@ -86,7 +85,7 @@
 <body>
   <div class="container">
     <h2>Phone Authentication</h2>
-    <input id="phoneNumber" type="tel" placeholder="+971xxxxxxxxx" />
+    <input id="phoneNumber" type="tel" placeholder="0501234567 or 501234567" />
     <div id="recaptcha-container"></div>
     <button onclick="sendOTP()">Send OTP</button>
     <input id="otp" type="text" placeholder="Enter OTP" maxlength="6" />
@@ -94,7 +93,6 @@
   </div>
 
   <script>
-    // Your Firebase config - replace these values with your actual config
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "your-project.firebaseapp.com",
@@ -104,11 +102,9 @@
       appId: "1:1234567890:web:abcdef123456"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Set up reCAPTCHA verifier
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
       size: 'normal',
       callback: (response) => {
@@ -122,37 +118,51 @@
 
     let confirmationResult;
 
-    // Send OTP function
     function sendOTP() {
-      const phoneNumber = document.getElementById('phoneNumber').value;
-      auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
+      let phone = document.getElementById('phoneNumber').value.trim();
+      phone = phone.replace(/\s+/g, "");
+
+      if (phone.startsWith("0")) {
+        // e.g. 0501234567 → +971501234567
+        phone = "+971" + phone.slice(1);
+      } else if (phone.match(/^5\d{8}$/)) {
+        // e.g. 501234567 → +971501234567
+        phone = "+971" + phone;
+      } else if (phone.startsWith("971") && phone.length === 12) {
+        // e.g. 971501234567 → +971501234567
+        phone = "+" + phone;
+      } else if (!phone.startsWith("+971")) {
+        alert("Invalid number. Please enter a valid UAE number.");
+        return;
+      }
+
+      auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
         .then((result) => {
           confirmationResult = result;
-          alert('OTP sent!');
+          alert("OTP sent to " + phone);
         })
         .catch((error) => {
-          alert('Error sending OTP: ' + error.message);
+          alert("Error sending OTP: " + error.message);
         });
     }
 
-    // Verify OTP function
     function verifyOTP() {
       const code = document.getElementById('otp').value;
       if (!confirmationResult) {
         alert('Please send OTP first!');
         return;
       }
+
       confirmationResult.confirm(code)
         .then((result) => {
           const user = result.user;
-          alert('Login successful!');
-          // You can send data back to your app if using WebView
+          alert("Login successful!");
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ uid: user.uid, phone: user.phoneNumber }));
           }
         })
         .catch((error) => {
-          alert('Invalid OTP: ' + error.message);
+          alert("Invalid OTP: " + error.message);
         });
     }
   </script>
