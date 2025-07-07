@@ -4,21 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Phone Authentication</title>
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
-      background-color: #f0f0f0;
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
       padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f0f0;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -37,8 +32,8 @@
     h2 {
       text-align: center;
       color: #222CAF;
-      margin-bottom: 20px;
       font-size: 22px;
+      margin-bottom: 20px;
     }
 
     input, button {
@@ -49,9 +44,7 @@
       font-size: 16px;
       font-weight: bold;
       text-align: center;
-      display: block;
       margin-bottom: 20px;
-      box-sizing: border-box;
     }
 
     input {
@@ -61,18 +54,16 @@
 
     input::placeholder {
       color: #CBB26A;
-      opacity: 1;
     }
 
     button {
-      background-color: #000000;
-      color: white;
+      background-color: #000;
+      color: #fff;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
 
     button:hover {
-      background-color: #222222;
+      background-color: #222;
     }
 
     #recaptcha-container {
@@ -80,16 +71,32 @@
       display: flex;
       justify-content: center;
     }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Phone Authentication</h2>
-    <input id="phoneNumber" type="tel" placeholder="0501234567 or 501234567" />
-    <div id="recaptcha-container"></div>
-    <button onclick="sendOTP()">Send OTP</button>
-    <input id="otp" type="text" placeholder="Enter OTP" maxlength="6" />
-    <button onclick="verifyOTP()">Verify OTP</button>
+
+    <!-- Step 1: Enter Phone Number -->
+    <div id="step1" class="section active">
+      <input id="phoneNumber" type="tel" placeholder="0501234567 or 501234567" />
+      <div id="recaptcha-container"></div>
+      <button onclick="sendOTP()">Send OTP</button>
+    </div>
+
+    <!-- Step 2: Enter OTP -->
+    <div id="step2" class="section">
+      <input id="otp" type="text" placeholder="Enter OTP" maxlength="6" />
+      <button onclick="verifyOTP()">Verify OTP</button>
+    </div>
   </div>
 
   <script>
@@ -112,7 +119,7 @@
       }
     });
 
-    recaptchaVerifier.render().then((widgetId) => {
+    recaptchaVerifier.render().then(widgetId => {
       window.recaptchaWidgetId = widgetId;
     });
 
@@ -123,45 +130,46 @@
       phone = phone.replace(/\s+/g, "");
 
       if (phone.startsWith("0")) {
-        // e.g. 0501234567 → +971501234567
         phone = "+971" + phone.slice(1);
       } else if (phone.match(/^5\d{8}$/)) {
-        // e.g. 501234567 → +971501234567
         phone = "+971" + phone;
       } else if (phone.startsWith("971") && phone.length === 12) {
-        // e.g. 971501234567 → +971501234567
         phone = "+" + phone;
       } else if (!phone.startsWith("+971")) {
-        alert("Invalid number. Please enter a valid UAE number.");
+        alert("Invalid number. Please enter a valid UAE mobile number.");
         return;
       }
 
       auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
-        .then((result) => {
+        .then(result => {
           confirmationResult = result;
           alert("OTP sent to " + phone);
+          // Switch to Step 2
+          document.getElementById('step1').classList.remove('active');
+          document.getElementById('step2').classList.add('active');
         })
-        .catch((error) => {
+        .catch(error => {
           alert("Error sending OTP: " + error.message);
         });
     }
 
     function verifyOTP() {
       const code = document.getElementById('otp').value;
+
       if (!confirmationResult) {
         alert('Please send OTP first!');
         return;
       }
 
       confirmationResult.confirm(code)
-        .then((result) => {
+        .then(result => {
           const user = result.user;
           alert("Login successful!");
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ uid: user.uid, phone: user.phoneNumber }));
           }
         })
-        .catch((error) => {
+        .catch(error => {
           alert("Invalid OTP: " + error.message);
         });
     }
