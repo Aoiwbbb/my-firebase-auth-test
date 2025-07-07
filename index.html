@@ -1,42 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Firebase Phone Auth</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phone Authentication</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    body {
+      background-color: #f0f0f0;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 30px 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 360px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+    }
+
+    h2 {
+      text-align: center;
+      color: #222CAF;
+      margin-bottom: 24px;
+      font-size: 22px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 6px;
+      background-color: #222CAF;
+      color: #CBB26A;
+      font-size: 16px;
+    }
+
+    input::placeholder {
+      color: #CBB26A;
+      opacity: 1;
+    }
+
+    #recaptcha-container {
+      margin: 12px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background-color: #000000;
+      color: #FFFFFF;
+      font-weight: bold;
+      font-size: 17px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #222222;
+    }
+  </style>
 </head>
 <body>
-  <h3>Phone Auth</h3>
-  <input id="phoneNumber" placeholder="+971xxxxxxxxx" />
-  <div id="recaptcha-container"></div>
-  <button onclick="sendOTP()">Send OTP</button>
+  <div class="container">
+    <h2>Phone Authentication</h2>
+    
+    <input id="phoneNumber" type="tel" placeholder="+971xxxxxxxxx" />
+    <div id="recaptcha-container"></div>
+    <button onclick="sendOTP()">Send OTP</button>
 
-  <br><br>
-  <input id="otp" placeholder="Enter OTP" />
-  <button onclick="verifyOTP()">Verify OTP</button>
+    <input id="otp" type="text" placeholder="Enter OTP" maxlength="6" />
+    <button onclick="verifyOTP()">Verify OTP</button>
+  </div>
 
   <script>
-    // Your Firebase config here
+    // Replace with your actual Firebase config
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "your-project.firebaseapp.com",
       projectId: "your-project",
       storageBucket: "your-project.appspot.com",
       messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:abcdef123456",
+      appId: "1:1234567890:web:abcdef123456"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Setup invisible reCAPTCHA
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-      'size': 'invisible',
-      'callback': (response) => {
-        // reCAPTCHA solved, allow sendOTP
+      size: 'normal',
+      callback: (response) => {
         console.log('reCAPTCHA solved');
       }
+    });
+
+    recaptchaVerifier.render().then((widgetId) => {
+      window.recaptchaWidgetId = widgetId;
     });
 
     let confirmationResult;
@@ -61,11 +133,8 @@
       }
       confirmationResult.confirm(code)
         .then((result) => {
-          // User signed in successfully.
           const user = result.user;
-          alert('Phone Auth successful! UID: ' + user.uid);
-
-          // Send message back to Thunkable app
+          alert('Login successful!');
           window.ReactNativeWebView.postMessage(JSON.stringify({ uid: user.uid, phone: user.phoneNumber }));
         })
         .catch((error) => {
