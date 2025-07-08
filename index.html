@@ -73,18 +73,21 @@
 <body>
   <div class="container">
     <h2>Phone Authentication</h2>
+
     <!-- Step 1: Enter Phone Number -->
     <div id="step1" class="section active">
-      <input id="phoneNumber" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="0501234567 or 501234567" />
+      <input id="phoneNumber" type="tel" inputmode="numeric" placeholder="0501234567 or 501234567" />
       <div id="recaptcha-container"></div>
       <button onclick="sendOTP()">Send OTP</button>
     </div>
+
     <!-- Step 2: Enter OTP -->
     <div id="step2" class="section">
-      <input id="otp" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Enter OTP" maxlength="6" />
+      <input id="otp" type="tel" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter OTP" maxlength="6" />
       <button onclick="verifyOTP()">Verify OTP</button>
     </div>
   </div>
+
   <script>
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
@@ -94,21 +97,27 @@
       messagingSenderId: "1234567890",
       appId: "1:1234567890:web:abcdef123456"
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
       size: 'normal',
       callback: (response) => {
         console.log('reCAPTCHA solved');
       }
     });
+
     recaptchaVerifier.render().then(widgetId => {
       window.recaptchaWidgetId = widgetId;
     });
+
     let confirmationResult;
+
     function sendOTP() {
       let phone = document.getElementById('phoneNumber').value.trim();
       phone = phone.replace(/\s+/g, "");
+
       if (phone.startsWith("0")) {
         phone = "+971" + phone.slice(1);
       } else if (phone.match(/^5\d{8}$/)) {
@@ -119,6 +128,7 @@
         alert("Invalid number. Please enter a valid UAE mobile number.");
         return;
       }
+
       auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
         .then(result => {
           confirmationResult = result;
@@ -130,18 +140,24 @@
           alert("Error sending OTP: " + error.message);
         });
     }
+
     function verifyOTP() {
       const code = document.getElementById('otp').value;
+
       if (!confirmationResult) {
         alert('Please send OTP first!');
         return;
       }
+
       confirmationResult.confirm(code)
         .then(result => {
           const user = result.user;
           alert("Login successful!");
           if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ uid: user.uid, phone: user.phoneNumber }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              uid: user.uid,
+              phone: user.phoneNumber
+            }));
           }
         })
         .catch(error => {
