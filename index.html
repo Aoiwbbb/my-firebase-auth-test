@@ -8,6 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       padding: 0;
@@ -18,6 +19,7 @@
       align-items: center;
       min-height: 100vh;
     }
+
     .container {
       background: white;
       padding: 30px 25px;
@@ -26,12 +28,14 @@
       max-width: 360px;
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
     }
+
     h2 {
       text-align: center;
       color: #222CAF;
       font-size: 22px;
       margin-bottom: 20px;
     }
+
     input, button {
       width: 100%;
       padding: 14px 16px;
@@ -42,31 +46,53 @@
       text-align: center;
       margin-bottom: 20px;
     }
+
     input {
       background-color: #222CAF;
       color: #CBB26A;
     }
+
     input::placeholder {
       color: #CBB26A;
     }
+
     button {
       background-color: #000;
       color: #fff;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #222;
     }
+
     #recaptcha-container {
       margin-bottom: 20px;
       display: flex;
       justify-content: center;
     }
+
     .section {
       display: none;
     }
+
     .section.active {
       display: block;
+    }
+
+    #resendBtn {
+      background: none;
+      border: none;
+      color: #007BFF;
+      text-decoration: underline;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0;
+      margin-top: -10px;
+    }
+
+    #resendBtn:hover {
+      color: #0056b3;
     }
   </style>
 </head>
@@ -85,6 +111,7 @@
     <div id="step2" class="section">
       <input id="otp" type="tel" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter OTP" maxlength="6" />
       <button onclick="verifyOTP()">Verify OTP</button>
+      <button id="resendBtn" onclick="resendOTP()">Resend OTP</button>
     </div>
   </div>
 
@@ -113,6 +140,7 @@
     });
 
     let confirmationResult;
+    let lastPhoneNumber = "";
 
     function sendOTP() {
       let phone = document.getElementById('phoneNumber').value.trim();
@@ -129,6 +157,8 @@
         return;
       }
 
+      lastPhoneNumber = phone;
+
       auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
         .then(result => {
           confirmationResult = result;
@@ -138,6 +168,26 @@
         })
         .catch(error => {
           alert("Error sending OTP: " + error.message);
+        });
+    }
+
+    function resendOTP() {
+      if (!lastPhoneNumber) {
+        alert("Phone number missing. Please enter your number again.");
+        return;
+      }
+
+      window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        size: 'invisible'
+      });
+
+      auth.signInWithPhoneNumber(lastPhoneNumber, window.recaptchaVerifier)
+        .then(result => {
+          confirmationResult = result;
+          alert("OTP resent to " + lastPhoneNumber);
+        })
+        .catch(error => {
+          alert("Error resending OTP: " + error.message);
         });
     }
 
