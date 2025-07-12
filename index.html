@@ -69,6 +69,14 @@
     .section.active {
       display: block;
     }
+    #resend-link {
+      color: #222CAF;
+      text-align: center;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: -10px;
+    }
   </style>
 </head>
 <body>
@@ -87,6 +95,7 @@
     <div id="step2" class="section">
       <input id="otp" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Enter OTP" maxlength="6" />
       <button onclick="verifyOTP()">Verify OTP</button>
+      <p id="resend-link" onclick="resendOTP()">Resend OTP</p>
     </div>
   </div>
 
@@ -143,14 +152,31 @@
       auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
         .then(result => {
           confirmationResult = result;
-          localStorage.setItem('userEmail', email); // Save email temporarily
-          localStorage.setItem('userPhone', phone); // Save phone temporarily
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('userPhone', phone);
           alert("OTP sent to " + phone);
           document.getElementById('step1').classList.remove('active');
           document.getElementById('step2').classList.add('active');
         })
         .catch(error => {
           alert("Error sending OTP: " + error.message);
+        });
+    }
+
+    function resendOTP() {
+      const phone = localStorage.getItem('userPhone');
+      if (!phone) {
+        alert("Phone number not found. Please go back and enter your details again.");
+        return;
+      }
+
+      auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
+        .then(result => {
+          confirmationResult = result;
+          alert("OTP resent to " + phone);
+        })
+        .catch(error => {
+          alert("Error resending OTP: " + error.message);
         });
     }
 
@@ -176,7 +202,6 @@
 
           alert("Login successful!");
 
-          // Send back to Thunkable
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               uid: uid,
