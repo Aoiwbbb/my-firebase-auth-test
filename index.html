@@ -77,6 +77,12 @@
       font-size: 14px;
       margin-top: -10px;
     }
+    #resend-link.disabled {
+      color: gray;
+      text-decoration: none;
+      pointer-events: none;
+      cursor: default;
+    }
   </style>
 </head>
 <body>
@@ -127,6 +133,8 @@
     });
 
     let confirmationResult;
+    let resendAttempts = 0;
+    const maxResend = 3;
 
     function sendOTP() {
       const email = document.getElementById('email').value.trim();
@@ -157,6 +165,7 @@
           alert("OTP sent to " + phone);
           document.getElementById('step1').classList.remove('active');
           document.getElementById('step2').classList.add('active');
+          startResendCooldown();
         })
         .catch(error => {
           alert("Error sending OTP: " + error.message);
@@ -164,6 +173,12 @@
     }
 
     function resendOTP() {
+      if (resendAttempts >= maxResend) {
+        document.getElementById('resend-link').innerText = "You've reached the OTP resend limit.";
+        document.getElementById('resend-link').classList.add('disabled');
+        return;
+      }
+
       const phone = localStorage.getItem('userPhone');
       if (!phone) {
         alert("Phone number not found. Please go back and enter your details again.");
@@ -173,11 +188,32 @@
       auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
         .then(result => {
           confirmationResult = result;
+          resendAttempts++;
           alert("OTP resent to " + phone);
+          startResendCooldown();
         })
         .catch(error => {
           alert("Error resending OTP: " + error.message);
         });
+    }
+
+    function startResendCooldown() {
+      const resendLink = document.getElementById('resend-link');
+      let timeLeft = 30;
+      resendLink.classList.add('disabled');
+      resendLink.innerText = `Resend OTP (${timeLeft}s)`;
+
+      const interval = setInterval(() => {
+        timeLeft--;
+        resendLink.innerText = `Resend OTP (${timeLeft}s)`;
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          if (resendAttempts < maxResend) {
+            resendLink.innerText = "Resend OTP";
+            resendLink.classList.remove('disabled');
+          }
+        }
+      }, 1000);
     }
 
     function verifyOTP() {
@@ -194,7 +230,6 @@
           const phone = localStorage.getItem('userPhone');
           const uid = user.uid;
 
-          // Save to Firebase Realtime Database
           database.ref('users/' + uid).set({
             email: email,
             phone: phone
